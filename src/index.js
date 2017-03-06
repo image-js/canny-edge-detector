@@ -3,9 +3,9 @@
 var Image = require('image-js');
 
 const defaultOptions = {
-    lowThreshold: 20,
-    highThreshold: 60,
-    blur: 1.5,
+    lowThreshold: 10,
+    highThreshold: 90,
+    blur: 1,
     brightness: 255
 };
 
@@ -13,9 +13,6 @@ function cannyEdgeDetector(image, options) {
     options = Object.assign({}, defaultOptions, options);
 
     var width = image.width, height = image.height;
-    function to1D(x, y) {
-        return x * height + y;
-    }
 
     image = image.grey({
         algorithm: 'luma601'
@@ -40,7 +37,8 @@ function cannyEdgeDetector(image, options) {
     ];
 
     var gfOptions = {
-        sigma: blur
+        sigma: blur,
+        radius: 3
     };
 
     var gf = image.gaussianFilter(gfOptions);
@@ -50,21 +48,21 @@ function cannyEdgeDetector(image, options) {
         mode: 'periodic'
     };
 
-    var gradientX = gf.convolution(Gx, convOptions);
-    var gradientY = gf.convolution(Gy, convOptions);
+    var gradientX = gf.convolution(Gy, convOptions);
+    var gradientY = gf.convolution(Gx, convOptions);
 
     var G = new Image(width, height, {
         kind: 'GREY',
-        bitDepth: 32
+        bitDepth: 16
     });
 
     for (var i = 0; i < width; i++) {
         for (var j = 0; j < height; j++) {
-            // var c = to1D(i, j);
-            // G[c] = Math.abs(gradientY.getPixel(c)[0]) + Math.abs(gradientX.getPixel(c)[0]);
-            G.setPixelXY(i, j, [Math.hypot(gradientY.getPixelXY(i, j)[0], gradientX.getPixelXY(i, j)[0])]);
+            G.setPixelXY(i, j, [Math.abs(gradientY.getPixelXY(i, j)[0]) + Math.abs(gradientX.getPixelXY(i, j)[0])]);
         }
     }
+
+    G.save("gradient.jpg");
 
 
     var nms = new Image(width, height, {
