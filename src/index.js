@@ -3,12 +3,23 @@
 var Image = require('image-js');
 
 const defaultOptions = {
-    lowThreshold: 20,
-    highThreshold: 60,
+    lowThreshold: 10,
+    highThreshold: 30,
     blur: 1.1,
     brightness: 255
 };
 
+
+/**
+ * Find edges in an image using the Canny algorithm
+ * @param {Image} image
+ * @param {object} options
+ * @param {number} [options.lowThreshold=10] : first threshold for the hysteresis procedure.
+ * @param {number} [options.highThreshold=30] : second threshold for the hysteresis procedure.
+ * @param {number} [options.blur=1.1] : sigma parameter for gaussian filter step.
+ * @param {number} [options.brightness] : values assigned to each edge pixel on the result image.
+ * @returns {Image} : an image with the edges at options.brightness value.
+ */
 function cannyEdgeDetector(image, options) {
     options = Object.assign({}, defaultOptions, options);
 
@@ -17,11 +28,6 @@ function cannyEdgeDetector(image, options) {
     image = image.grey({
         algorithm: 'luma601'
     });
-
-    var tMin = options.lowThreshold;
-    var tMax = options.highThreshold;
-    var blur = options.blur;
-    var brightness = options.brightness;
 
 
     var Gx = [
@@ -37,7 +43,7 @@ function cannyEdgeDetector(image, options) {
     ];
 
     var gfOptions = {
-        sigma: blur,
+        sigma: options.blur,
         radius: 3
     };
 
@@ -58,11 +64,11 @@ function cannyEdgeDetector(image, options) {
 
     for (var i = 0; i < width; i++) {
         for (var j = 0; j < height; j++) {
-            G.setPixelXY(i, j, [Math.abs(gradientY.getPixelXY(i, j)[0]) + Math.abs(gradientX.getPixelXY(i, j)[0])]);
+            // abs value also works
+            //G.setPixelXY(i, j, [Math.abs(gradientY.getPixelXY(i, j)[0]) + Math.abs(gradientX.getPixelXY(i, j)[0])]);
+            G.setPixelXY(i, j, [Math.hypot(gradientY.getPixelXY(i, j)[0], gradientX.getPixelXY(i, j)[0])]);
         }
     }
-
-    G.save("gradient.jpg");
 
 
     var nms = new Image(width, height, {
@@ -77,7 +83,7 @@ function cannyEdgeDetector(image, options) {
         kind: 'GREY'
     });
 
-    // non-maximum supression
+    // Non-Maximum supression
     for (i = 1; i < width - 1; i++) {
         for (j = 1; j < height - 1; j++) {
 
@@ -98,11 +104,11 @@ function cannyEdgeDetector(image, options) {
     for (i = 0; i < width * height; ++i) {
         var currentNms = nms.getPixel(i)[0];
         var currentEdge = 0;
-        if (currentNms > tMax) {
+        if (currentNms > options.highThreshold) {
             currentEdge++;
-            finalImage.setPixel(i, [brightness]);
+            finalImage.setPixel(i, [options.brightness]);
         }
-        if (currentNms > tMin) {
+        if (currentNms > options.lowThreshold) {
             currentEdge++;
         }
 
@@ -110,7 +116,7 @@ function cannyEdgeDetector(image, options) {
     }
 
 
-    // Hysteresis
+    // Hysteresis: first pass
     var currentPixels = [];
     for (i = 1; i < width - 1; ++i) {
         for (j = 1; j < height - 1; ++j) {
@@ -123,7 +129,7 @@ function cannyEdgeDetector(image, options) {
                 for (var l = j - 1; l < j + 2; ++l) {
                     if (edges.getPixelXY(k, l)[0] === 2) {
                         currentPixels.push([i, j]);
-                        finalImage.setPixelXY(i, j, [brightness]);
+                        finalImage.setPixelXY(i, j, [options.brightness]);
                         end = true;
                         break;
                     }
@@ -135,6 +141,7 @@ function cannyEdgeDetector(image, options) {
         }
     }
 
+    // Hysteresis: second pass
     while (currentPixels.length > 0) {
         var newPixels = [];
         for (i = 0; i < currentPixels.length; ++i) {
@@ -147,7 +154,7 @@ function cannyEdgeDetector(image, options) {
                     var col = currentPixels[i][1] + k;
                     if (edges.getPixelXY(row, col)[0] === 1 && finalImage.getPixelXY(row, col)[0] === 0) {
                         newPixels.push([row, col]);
-                        finalImage.setPixelXY(row, col, [brightness]);
+                        finalImage.setPixelXY(row, col, [options.brightness]);
                     }
                 }
             }
