@@ -18,7 +18,7 @@ const defaultOptions = {
  * @param {number} [options.highThreshold=30] : second threshold for the hysteresis procedure.
  * @param {number} [options.blur=1.1] : sigma parameter for gaussian filter step.
  * @param {number} [options.brightness] : values assigned to each edge pixel on the result image.
- * @returns {Image} : an image with the edges at options.brightness value.
+ * @return {Image} : an image with the edges at options.brightness value.
  */
 function cannyEdgeDetector(image, options) {
     options = Object.assign({}, defaultOptions, options);
@@ -96,7 +96,7 @@ function cannyEdgeDetector(image, options) {
                 || (dir === 2 && (G.getPixelXY(i, j)[0] <= G.getPixelXY(i - 1, j)[0] || G.getPixelXY(i, j)[0] <= G.getPixelXY(i + 1, j)[0]))
                 || (dir === 3 && (G.getPixelXY(i, j)[0] <= G.getPixelXY(i - 1, j - 1)[0] || G.getPixelXY(i, j)[0] <= G.getPixelXY(i + 1, j + 1)[0])))
             ) {
-                nms.setPixelXY(i, j, G.getPixelXY(i, j))
+                nms.setPixelXY(i, j, G.getPixelXY(i, j));
             }
         }
     }
@@ -112,7 +112,7 @@ function cannyEdgeDetector(image, options) {
             currentEdge++;
         }
 
-        edges.setPixel(i, [currentEdge])
+        edges.setPixel(i, [currentEdge]);
     }
 
 
