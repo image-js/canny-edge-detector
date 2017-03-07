@@ -3,9 +3,9 @@
 var Image = require('image-js');
 
 const defaultOptions = {
-    lowThreshold: 10,
-    highThreshold: 90,
-    blur: 1,
+    lowThreshold: 20,
+    highThreshold: 60,
+    blur: 1.1,
     brightness: 255
 };
 
