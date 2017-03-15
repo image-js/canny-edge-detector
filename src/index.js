@@ -5,14 +5,13 @@ var Image = require('image-js');
 const defaultOptions = {
     lowThreshold: 10,
     highThreshold: 30,
-    blur: 1.1,
-    brightness: 255
+    blur: 1.1
 };
 
 
 /**
  * Find edges in an image using the Canny algorithm
- * @param {Image} image
+ * @param {Image} image : a greyscale image
  * @param {object} options
  * @param {number} [options.lowThreshold=10] : first threshold for the hysteresis procedure.
  * @param {number} [options.highThreshold=30] : second threshold for the hysteresis procedure.
@@ -21,14 +20,16 @@ const defaultOptions = {
  * @return {Image} : an image with the edges at options.brightness value.
  */
 function cannyEdgeDetector(image, options) {
+    image.checkProcessable("Canny edge detector", {
+        bitDepth: 8,
+        channels: 1,
+        components: 1
+    });
+
     options = Object.assign({}, defaultOptions, options);
 
     var width = image.width, height = image.height;
-
-    image = image.grey({
-        algorithm: 'luma601'
-    });
-
+    var brightness = image.maxValue;
 
     var Gx = [
         [-1, 0, +1],
@@ -57,19 +58,7 @@ function cannyEdgeDetector(image, options) {
     var gradientX = gf.convolution(Gy, convOptions);
     var gradientY = gf.convolution(Gx, convOptions);
 
-    var G = new Image(width, height, {
-        kind: 'GREY',
-        bitDepth: 16
-    });
-
-    for (var i = 0; i < width; i++) {
-        for (var j = 0; j < height; j++) {
-            // abs value also works
-            //G.setPixelXY(i, j, [Math.abs(gradientY.getPixelXY(i, j)[0]) + Math.abs(gradientX.getPixelXY(i, j)[0])]);
-            G.setPixelXY(i, j, [Math.hypot(gradientY.getPixelXY(i, j)[0], gradientX.getPixelXY(i, j)[0])]);
-        }
-    }
-
+    var G = gradientY.hypotenuse(gradientX);
 
     var nms = new Image(width, height, {
         kind: 'GREY',
@@ -84,35 +73,34 @@ function cannyEdgeDetector(image, options) {
     });
 
     // Non-Maximum supression
-    for (i = 1; i < width - 1; i++) {
-        for (j = 1; j < height - 1; j++) {
+    for (var i = 1; i < width - 1; i++) {
+        for (var j = 1; j < height - 1; j++) {
 
-            var dir = (Math.round(Math.atan2(gradientY.getPixelXY(i, j)[0], gradientX.getPixelXY(i, j)[0]) * (5.0 / Math.PI)) + 5) % 5;
-            dir %= 4;
+            var dir = (Math.round(Math.atan2(gradientY.getValueXY(i, j, 0), gradientX.getValueXY(i, j, 0)) * (5.0 / Math.PI)) + 5) % 4;
 
             if (
-                !((dir === 0 && (G.getPixelXY(i, j)[0] <= G.getPixelXY(i, j - 1)[0] || G.getPixelXY(i, j)[0] <= G.getPixelXY(i, j + 1)[0]))
-                || (dir === 1 && (G.getPixelXY(i, j)[0] <= G.getPixelXY(i - 1, j + 1)[0] || G.getPixelXY(i, j)[0] <= G.getPixelXY(i + 1, j - 1)[0]))
-                || (dir === 2 && (G.getPixelXY(i, j)[0] <= G.getPixelXY(i - 1, j)[0] || G.getPixelXY(i, j)[0] <= G.getPixelXY(i + 1, j)[0]))
-                || (dir === 3 && (G.getPixelXY(i, j)[0] <= G.getPixelXY(i - 1, j - 1)[0] || G.getPixelXY(i, j)[0] <= G.getPixelXY(i + 1, j + 1)[0])))
+                !((dir === 0 && (G.getValueXY(i, j, 0) <= G.getValueXY(i, j - 1, 0) || G.getValueXY(i, j, 0) <= G.getValueXY(i, j + 1, 0)))
+                || (dir === 1 && (G.getValueXY(i, j, 0) <= G.getValueXY(i - 1, j + 1, 0) || G.getValueXY(i, j, 0) <= G.getValueXY(i + 1, j - 1, 0)))
+                || (dir === 2 && (G.getValueXY(i, j, 0) <= G.getValueXY(i - 1, j, 0) || G.getValueXY(i, j, 0) <= G.getValueXY(i + 1, j, 0)))
+                || (dir === 3 && (G.getValueXY(i, j, 0) <= G.getValueXY(i - 1, j - 1, 0) || G.getValueXY(i, j, 0) <= G.getValueXY(i + 1, j + 1, 0))))
             ) {
-                nms.setPixelXY(i, j, G.getPixelXY(i, j));
+                nms.setValueXY(i, j, 0, G.getValueXY(i, j, 0));
             }
         }
     }
 
     for (i = 0; i < width * height; ++i) {
-        var currentNms = nms.getPixel(i)[0];
+        var currentNms = nms.data[i];
         var currentEdge = 0;
         if (currentNms > options.highThreshold) {
             currentEdge++;
-            finalImage.setPixel(i, [options.brightness]);
+            finalImage.data[i] = brightness;
         }
         if (currentNms > options.lowThreshold) {
             currentEdge++;
         }
 
-        edges.setPixel(i, [currentEdge]);
+        edges.data[i] = currentEdge;
     }
 
 
@@ -120,22 +108,19 @@ function cannyEdgeDetector(image, options) {
     var currentPixels = [];
     for (i = 1; i < width - 1; ++i) {
         for (j = 1; j < height - 1; ++j) {
-            if (edges.getPixelXY(i, j)[0] !== 1) {
+            if (edges.getValueXY(i, j, 0) !== 1) {
                 continue;
             }
 
             var end = false;
-            for (var k = i - 1; k < i + 2; ++k) {
+            outer: for (var k = i - 1; k < i + 2; ++k) {
                 for (var l = j - 1; l < j + 2; ++l) {
-                    if (edges.getPixelXY(k, l)[0] === 2) {
+                    if (edges.getValueXY(k, l, 0) === 2) {
                         currentPixels.push([i, j]);
-                        finalImage.setPixelXY(i, j, [options.brightness]);
+                        finalImage.setValueXY(i, j, 0, brightness);
                         end = true;
-                        break;
+                        break outer;
                     }
-                }
-                if (end) {
-                    break;
                 }
             }
         }
@@ -152,9 +137,9 @@ function cannyEdgeDetector(image, options) {
                     }
                     var row = currentPixels[i][0] + j;
                     var col = currentPixels[i][1] + k;
-                    if (edges.getPixelXY(row, col)[0] === 1 && finalImage.getPixelXY(row, col)[0] === 0) {
+                    if (edges.getValueXY(row, col, 0) === 1 && finalImage.getValueXY(row, col, 0) === 0) {
                         newPixels.push([row, col]);
-                        finalImage.setPixelXY(row, col, [options.brightness]);
+                        finalImage.setValueXY(row, col, 0, brightness);
                     }
                 }
             }
