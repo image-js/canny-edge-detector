@@ -76,7 +76,8 @@ function cannyEdgeDetector(image, options) {
     for (var i = 1; i < width - 1; i++) {
         for (var j = 1; j < height - 1; j++) {
 
-            var dir = (Math.round(Math.atan2(gradientY.getValueXY(i, j, 0), gradientX.getValueXY(i, j, 0)) * (5.0 / Math.PI)) + 5) % 4;
+            var dir = (Math.round(Math.atan2(gradientY.getValueXY(i, j, 0), gradientX.getValueXY(i, j, 0)) * (5.0 / Math.PI)) + 5) % 5;
+            //dir %= 4;
 
             if (
                 !((dir === 0 && (G.getValueXY(i, j, 0) <= G.getValueXY(i, j - 1, 0) || G.getValueXY(i, j, 0) <= G.getValueXY(i, j + 1, 0)))
