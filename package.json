@@ -1,43 +1,47 @@
 {
   "name": "canny-edge-detector",
-  "version": "0.0.1",
-  "description": "",
-  "main": "./src/index.js",
+  "version": "0.0.0",
+  "description": "Canny edge detector",
+  "main": "lib/index.js",
+  "module": "src/index.js",
   "files": [
+    "lib",
     "src"
   ],
   "scripts": {
-    "eslint": "eslint src test",
+    "eslint": "eslint src",
     "eslint-fix": "npm run eslint -- --fix",
-    "test": "npm run test-mocha && npm run eslint",
-    "test-mocha": "mocha --require should --reporter mocha-better-spec-reporter"
+    "prepublish": "rollup -c",
+    "test": "run-s testonly eslint",
+    "testonly": "jest"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mljs/canny-edge-detector.git"
+    "url": "https://github.com/image-js/canny-edge-detector.git"
   },
   "keywords": [
-    "machine",
-    "learning",
-    "data",
-    "mining",
-    "datamining"
+    "image-js",
+    "image",
+    "computer",
+    "vision",
+    "canny",
+    "edge",
+    "detector"
   ],
-  "author": "Jefferson Hernandez <jeffersonh44@gmail.com> (https://github.com/Jefferson Hernandez)",
+  "author": "Jefferson Hernandez <jeffersonh44@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mljs/canny-edge-detector/issues"
+    "url": "https://github.com/image-js/canny-edge-detector/issues"
   },
-  "homepage": "https://github.com/mljs/canny-edge-detector#readme",
+  "homepage": "https://github.com/image-js/canny-edge-detector#readme",
   "devDependencies": {
-    "eslint": "^3.12.2",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.24.1",
+    "eslint": "^4.1.1",
     "eslint-config-cheminfo": "^1.6.0",
-    "eslint-plugin-no-only-tests": "^1.1.0",
-    "mocha": "^3.2.0",
-    "mocha-better-spec-reporter": "^3.1.0",
-    "should": "^11.1.2"
-  },
-  "dependencies": {
-    "image-js": "^0.9.5"
+    "eslint-plugin-no-only-tests": "^2.0.0",
+    "image-js": "^0.11.0",
+    "jest": "^20.0.4",
+    "npm-run-all": "^4.0.2",
+    "rollup": "^0.43.0"
   }
 }
