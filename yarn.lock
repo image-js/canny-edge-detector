@@ -1156,9 +1156,9 @@ ignore@^3.3.3:
   version "3.3.3"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-3.3.3.tgz#432352e57accd87ab3110e82d3fea0e47812156d"
 
-image-js@^0.11.0:
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/image-js/-/image-js-0.11.0.tgz#1aac3714e8979b10ad70fbfcfd91eb786768d267"
+image-js@^0.11.4:
+  version "0.11.4"
+  resolved "https://registry.yarnpkg.com/image-js/-/image-js-0.11.4.tgz#a23e208d7bdfb86891e5579f694580a147da3ea1"
   dependencies:
     blob-util "^1.2.1"
     color-functions "^1.1.0"
