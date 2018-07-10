@@ -8,7 +8,7 @@ Canny edge detector
 
 ## Installation
 
-`$ npm install canny-edge-detector`
+`$ npm install canny-edge-detector image-js`
 
 ## Usage
 
@@ -30,10 +30,9 @@ __options__
 * `brightness`: Values assigned to each edge pixel on the result image (default: image.maxValue).
 
 ## Example
-
 ```js
-import cannyEdgeDetector from 'canny-edge-detector';
-import Image from 'image-js';
+const cannyEdgeDetector = require('canny-edge-detector');
+const Image = require('image-js').Image;
 
 Image.load('my-image.png').then((img) => {
   const grey = img.grey();
